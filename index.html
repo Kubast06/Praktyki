@@ -72,13 +72,12 @@ document.getElementById('filei').addEventListener('change', function() {
   alert('Plik Excel został załadowany i zapisany.');
       }
     });
-
+    
+//tutaj znajduje sie kod do wczytania danych z excela 
     document.getElementById('select').addEventListener('change', function() {
       var selectedOption = parseInt(this.value);
-
       if (loadedFile) {
         var reader = new FileReader();
-
         reader.onload = function(e) {
           var data = new Uint8Array(e.target.result);
           var workbook = XLSX.read(data, { type: 'array' });
