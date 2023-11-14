@@ -2,12 +2,12 @@
 <html>
 <head>
   <title>Porownywanie okregow</title>
-  <h1>liczba wyborcow w danych okregach wyborczych</h1>
 </head>
 <body>
-  <button id="przyciskexcel">Załaduj plik Excel</button> <br>
-  <input type="file" id="filei" accept=".xlsx" style="display: none;">
-  <select id="select"> 
+  <h1>liczba wyborcow w danych okregach wyborczych</h1>
+  <button id="przyciskcsv">Załaduj plik CSV</button> <br>
+  <input type="file" id="filei" accept=".csv" style="display: none;">
+  <select id="select">
     <option value="1">Okreg wyborczy 1</option>
     <option value="2">Okreg wyborczy 2</option>
     <option value="3">Okreg wyborczy 3</option>
@@ -52,49 +52,40 @@
   </select>
   <div id="wybranyokreg"></div>
 
+  <script>
+    var loadedFile;
 
+    document.getElementById('przyciskcsv').addEventListener('click', function() {
+      document.getElementById('filei').click();
+    });
 
-
-
- <!-- skrypt do odczytu plikow z excela znaleziony w necie -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
-
-
-<script>
-document.getElementById('przyciskexcel').addEventListener('click', function() {
-document.getElementById('filei').click();
-});
-
-document.getElementById('filei').addEventListener('change', function() {
-  var file = this.files[0];
-  if (file) {
-  loadedFile = file;
-  alert('Plik Excel został załadowany i zapisany.');
+    document.getElementById('filei').addEventListener('change', function() {
+      var file = this.files[0];
+      if (file) {
+        loadedFile = file;
+        alert('Plik CSV został załadowany i zapisany.');
       }
     });
-    
-//tutaj znajduje sie kod do wczytania danych z excela 
+
     document.getElementById('select').addEventListener('change', function() {
-      var selectedOption = parseInt(this.value);
+      var selectedOption = this.value;
       if (loadedFile) {
         var reader = new FileReader();
         reader.onload = function(e) {
-          var data = new Uint8Array(e.target.result);
-          var workbook = XLSX.read(data, { type: 'array' });
-          var worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          var selectedCell = worksheet[XLSX.utils.encode_cell({ r: selectedOption, c: 5 })];
-          var cellValue = selectedCell ? selectedCell.v : 'Brak danych';
-          document.getElementById('wybranyokreg').textContent = "Wybrany okreg wyborczy zawiera " + cellValue + " wyborcow";
+          var csvData = e.target.result;
+          var rows = csvData.split('\n');
+          var selectedRow = rows[selectedOption].split(';');
+
+         //Zamiana przecinkow na kropki
+          var cellValue = selectedRow[4].replace(',', '.') || 'Brak danych'; 
+          document.getElementById('wybranyokreg').textContent = "Wybrany okręg wyborczy zawiera " + cellValue + " wyborców";
         };
 
-        reader.readAsArrayBuffer(loadedFile);
+        reader.readAsText(loadedFile);
       } else {
-        alert('Proszę najpierw załadować plik Excel.');
+        alert('Proszę najpierw załadować plik CSV.');
       }
     });
   </script>
-
-
-
 </body>
 </html>
