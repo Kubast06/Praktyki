@@ -1,91 +1,99 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <title>Porownywanie okregow</title>
+    <title>Porownywanie okregow</title>
 </head>
+
 <body>
-  <h1>liczba wyborcow w danych okregach wyborczych</h1>
-  <button id="przyciskcsv">Załaduj plik CSV</button> <br>
-  <input type="file" id="filei" accept=".csv" style="display: none;">
-  <select id="select">
-    <option value="1">Okreg wyborczy 1</option>
-    <option value="2">Okreg wyborczy 2</option>
-    <option value="3">Okreg wyborczy 3</option>
-    <option value="4">Okreg wyborczy 4</option>
-    <option value="5">Okreg wyborczy 5</option>
-    <option value="6">Okreg wyborczy 6</option>
-    <option value="7">Okreg wyborczy 7</option>
-    <option value="8">Okreg wyborczy 8</option>
-    <option value="9">Okreg wyborczy 9</option>
-    <option value="10">Okreg wyborczy 10</option>
-    <option value="11">Okreg wyborczy 11</option>
-    <option value="12">Okreg wyborczy 12</option>
-    <option value="13">Okreg wyborczy 13</option>
-    <option value="14">Okreg wyborczy 14</option>
-    <option value="15">Okreg wyborczy 15</option>
-    <option value="16">Okreg wyborczy 16</option>
-    <option value="17">Okreg wyborczy 17</option>
-    <option value="18">Okreg wyborczy 18</option>
-    <option value="19">Okreg wyborczy 19</option>
-    <option value="20">Okreg wyborczy 20</option>
-    <option value="21">Okreg wyborczy 21</option>
-    <option value="22">Okreg wyborczy 22</option>
-    <option value="23">Okreg wyborczy 23</option>
-    <option value="24">Okreg wyborczy 24</option>
-    <option value="25">Okreg wyborczy 25</option>
-    <option value="26">Okreg wyborczy 26</option>
-    <option value="27">Okreg wyborczy 27</option>
-    <option value="28">Okreg wyborczy 28</option>
-    <option value="29">Okreg wyborczy 29</option>
-    <option value="30">Okreg wyborczy 30</option>
-    <option value="31">Okreg wyborczy 31</option>
-    <option value="32">Okreg wyborczy 32</option>
-    <option value="33">Okreg wyborczy 33</option>
-    <option value="34">Okreg wyborczy 34</option>
-    <option value="35">Okreg wyborczy 35</option>
-    <option value="36">Okreg wyborczy 36</option>
-    <option value="37">Okreg wyborczy 37</option>
-    <option value="38">Okreg wyborczy 38</option>
-    <option value="39">Okreg wyborczy 39</option>
-    <option value="40">Okreg wyborczy 40</option>
-    <option value="41">Okreg wyborczy 41</option>
-  </select>
-  <div id="wybranyokreg"></div>
+    <h1>liczba wyborcow w danych okregach wyborczych</h1>
+    <button id="przyciskcsv">Załaduj plik CSV</button> <br>
+    <input type="file" id="filei" accept=".csv" style="display: none;">
+    <select id="select">
+    </select>
+    <div id="wybranyokreg"></div>
 
-  <script>
-    var loadedFile;
+    <script>
+        var loadedFile;
+        var addedDistricts = [];
 
-    document.getElementById('przyciskcsv').addEventListener('click', function() {
-      document.getElementById('filei').click();
-    });
+        document.getElementById('przyciskcsv').addEventListener('click', function () {
+            document.getElementById('filei').click();
+        });
 
-    document.getElementById('filei').addEventListener('change', function() {
-      var file = this.files[0];
-      if (file) {
-        loadedFile = file;
-        alert('Plik CSV został załadowany i zapisany.');
-      }
-    });
+        document.getElementById('filei').addEventListener('change', function () {
+            var file = this.files[0];
+            if (file) {
+                loadedFile = file;
+                alert('Plik CSV został załadowany i zapisany.');
+                populateDropdown();
+            }
+        });
 
-    document.getElementById('select').addEventListener('change', function() {
-      var selectedOption = this.value;
-      if (loadedFile) {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-          var csvData = e.target.result;
-          var rows = csvData.split('\n');
-          var selectedRow = rows[selectedOption].split(';');
+        document.getElementById('select').addEventListener('change', function () {
+            var selectedOption = this.value;
+            if (loadedFile) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var csvData = e.target.result;
+                    var rows = csvData.split('\n');
+                    var selectedDistrict = rows[selectedOption].split(';')[0];
 
-         //Zamiana przecinkow na kropki
-          var cellValue = selectedRow[4].replace(',', '.') || 'Brak danych'; 
-          document.getElementById('wybranyokreg').textContent = "Wybrany okręg wyborczy zawiera " + cellValue + " wyborców";
-        };
+                    var districtRows = rows.filter(function (row) {
+                        return row.startsWith(selectedDistrict + ';');
+                    });
 
-        reader.readAsText(loadedFile);
-      } else {
-        alert('Proszę najpierw załadować plik CSV.');
-      }
-    });
-  </script>
+                    displayResults(districtRows);
+                };
+
+                reader.readAsText(loadedFile);
+            } else {
+                alert('Proszę najpierw załadować plik CSV.');
+            }
+        });
+
+        function populateDropdown() {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var csvData = e.target.result;
+                var rows = csvData.split('\n');
+
+                var selectDropdown = document.getElementById('select');
+                
+                selectDropdown.innerHTML = ""; 
+                addedDistricts = []; 
+
+                for (var i = 0; i < rows.length; i++) {
+                    var districtNumber = rows[i].split(';')[0];
+                    if (!addedDistricts.includes(districtNumber)) {
+                        var optionValue = i;
+                        var optionText = "Okreg wyborczy " + districtNumber;
+                        var option = document.createElement("option");
+                        option.value = optionValue;
+                        option.text = optionText;
+                        selectDropdown.add(option);
+
+                        addedDistricts.push(districtNumber);
+                    }
+                }
+            };
+
+            reader.readAsText(loadedFile);
+        }
+
+        function displayResults(rows) {
+            var resultText = "Wyniki dla Okręgu Wyborczego " + rows[0].split(';')[0] + ":</br>";
+
+            for (var i = 0; i < rows.length; i++) {
+                var rowData = rows[i].split(';');
+                var districtName = rowData[2]; 
+                var votersCount = rowData[4].replace(',', '.') || 'Brak danych';
+                resultText += districtName + ": " + votersCount + " wyborców</br>";
+            }
+
+            document.getElementById('wybranyokreg').innerHTML = resultText;
+        }
+    </script>
 </body>
+
 </html>
