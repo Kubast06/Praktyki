@@ -9,9 +9,9 @@
     <h1>liczba wyborcow w danych okregach wyborczych</h1>
     <button id="przyciskcsv">Załaduj plik CSV</button> <br>
     <input type="file" id="filei" accept=".csv" style="display: none;">
-    <select id="select">
-    </select>
+    <select id="select"></select>
     <div id="wybranyokreg"></div>
+    <div id="kwadratodleglosci"></div>
 
     <script>
         var loadedFile;
@@ -40,10 +40,11 @@
                     var selectedDistrict = rows[selectedOption].split(';')[0];
 
                     var districtRows = rows.filter(function (row) {
-                        return row.startsWith(selectedDistrict + ';');
+                    return row.startsWith(selectedDistrict + ';');
                     });
 
                     displayResults(districtRows);
+                    kwadratodleglosci();
                 };
 
                 reader.readAsText(loadedFile);
@@ -52,46 +53,68 @@
             }
         });
 
+        function kwadratodleglosci() {
+            var selectedOption = document.getElementById('select').value;
+            if (loadedFile && selectedOption !== "") {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var csvData = e.target.result;
+                    var rows = csvData.split('\n');
+                    var selectedDistrict = rows[selectedOption].split(';')[0];
+
+                    var districtRows = rows.filter(function (row) {
+                    return row.startsWith(selectedDistrict + ';');
+                    });
+
+                    var squaredDistance = 0;
+                    for (var i = 0; i < districtRows.length; i++) {
+                    var rowData = districtRows[i].split(';');
+                    var votersCount = parseFloat(rowData[4].replace(',', '.')) || 0;
+                    squaredDistance += Math.pow(votersCount, 2);
+                    }
+
+                    document.getElementById('kwadratodleglosci').innerHTML = 'Kwadrat odległości dla Okręgu Wyborczego ' + selectedDistrict + ': ' + squaredDistance;
+                };
+
+                reader.readAsText(loadedFile);
+            } else {
+                alert('Proszę najpierw załadować plik CSV i wybrać okręg.');
+            }
+        }
+
         function populateDropdown() {
             var reader = new FileReader();
             reader.onload = function (e) {
                 var csvData = e.target.result;
                 var rows = csvData.split('\n');
-
                 var selectDropdown = document.getElementById('select');
-                
-                selectDropdown.innerHTML = ""; 
-                addedDistricts = []; 
-
+                selectDropdown.innerHTML = "";
+                addedDistricts = [];
                 for (var i = 0; i < rows.length; i++) {
                     var districtNumber = rows[i].split(';')[0];
                     if (!addedDistricts.includes(districtNumber)) {
-                        var optionValue = i;
-                        var optionText = "Okreg wyborczy " + districtNumber;
-                        var option = document.createElement("option");
-                        option.value = optionValue;
-                        option.text = optionText;
-                        selectDropdown.add(option);
-
-                        addedDistricts.push(districtNumber);
+                    var optionValue = i;
+                    var optionText = "Okreg wyborczy " + districtNumber;
+                    var option = document.createElement("option");
+                    option.value = optionValue;
+                    option.text = optionText;
+                    selectDropdown.add(option);
+                    addedDistricts.push(districtNumber);
                     }
                 }
             };
-
             reader.readAsText(loadedFile);
         }
-
         function displayResults(rows) {
-            var resultText = "Wyniki dla Okręgu Wyborczego " + rows[0].split(';')[0] + ":</br>";
-
-            for (var i = 0; i < rows.length; i++) {
-                var rowData = rows[i].split(';');
-                var districtName = rowData[2]; 
-                var votersCount = rowData[4].replace(',', '.') || 'Brak danych';
-                resultText += districtName + ": " + votersCount + " wyborców</br>";
+        var resultText = "Wyniki dla Okręgu Wyborczego " + rows[0].split(';')[0] + ":</br>";
+for (var i = 0; i < rows.length; i++) {
+            var rowData = rows[i].split(';');
+            var districtName = rowData[2];
+            var votersCount = rowData[4].replace(',', '.') || 'Brak danych';
+            resultText += districtName + ": " + votersCount + " wyborców</br>";
             }
 
-            document.getElementById('wybranyokreg').innerHTML = resultText;
+        document.getElementById('wybranyokreg').innerHTML = resultText;
         }
     </script>
 </body>
