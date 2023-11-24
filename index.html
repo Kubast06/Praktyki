@@ -1,100 +1,195 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <title>Porownywanie okregow</title>
-  <h1>liczba wyborcow w danych okregach wyborczych</h1>
+    <title>Porownywanie okregow</title>
 </head>
+
 <body>
-  <button id="przyciskexcel">Załaduj plik Excel</button> <br>
-  <input type="file" id="filei" accept=".xlsx" style="display: none;">
-  <select id="select"> 
-    <option value="1">Okreg wyborczy 1</option>
-    <option value="2">Okreg wyborczy 2</option>
-    <option value="3">Okreg wyborczy 3</option>
-    <option value="4">Okreg wyborczy 4</option>
-    <option value="5">Okreg wyborczy 5</option>
-    <option value="6">Okreg wyborczy 6</option>
-    <option value="7">Okreg wyborczy 7</option>
-    <option value="8">Okreg wyborczy 8</option>
-    <option value="9">Okreg wyborczy 9</option>
-    <option value="10">Okreg wyborczy 10</option>
-    <option value="11">Okreg wyborczy 11</option>
-    <option value="12">Okreg wyborczy 12</option>
-    <option value="13">Okreg wyborczy 13</option>
-    <option value="14">Okreg wyborczy 14</option>
-    <option value="15">Okreg wyborczy 15</option>
-    <option value="16">Okreg wyborczy 16</option>
-    <option value="17">Okreg wyborczy 17</option>
-    <option value="18">Okreg wyborczy 18</option>
-    <option value="19">Okreg wyborczy 19</option>
-    <option value="20">Okreg wyborczy 20</option>
-    <option value="21">Okreg wyborczy 21</option>
-    <option value="22">Okreg wyborczy 22</option>
-    <option value="23">Okreg wyborczy 23</option>
-    <option value="24">Okreg wyborczy 24</option>
-    <option value="25">Okreg wyborczy 25</option>
-    <option value="26">Okreg wyborczy 26</option>
-    <option value="27">Okreg wyborczy 27</option>
-    <option value="28">Okreg wyborczy 28</option>
-    <option value="29">Okreg wyborczy 29</option>
-    <option value="30">Okreg wyborczy 30</option>
-    <option value="31">Okreg wyborczy 31</option>
-    <option value="32">Okreg wyborczy 32</option>
-    <option value="33">Okreg wyborczy 33</option>
-    <option value="34">Okreg wyborczy 34</option>
-    <option value="35">Okreg wyborczy 35</option>
-    <option value="36">Okreg wyborczy 36</option>
-    <option value="37">Okreg wyborczy 37</option>
-    <option value="38">Okreg wyborczy 38</option>
-    <option value="39">Okreg wyborczy 39</option>
-    <option value="40">Okreg wyborczy 40</option>
-    <option value="41">Okreg wyborczy 41</option>
-  </select>
-  <div id="wybranyokreg"></div>
+    <h1>liczba wyborcow w danych okregach wyborczych</h1>
+    <button id="przyciskcsv">Załaduj plik CSV</button> <br>
+    <input type="file" id="filei" accept=".csv" style="display: none;">
+    <select id="select"></select>
+    <div id="wybranyokreg"></div>
+    <div id="kwadratodleglosci"></div>
+    <div id="najblizszeokregi"></div>
 
+    <script>
+        var loadedFile;
+        var addedDistricts = [];
 
+        document.getElementById('przyciskcsv').addEventListener('click', function () {
+            document.getElementById('filei').click();
+        });
 
+        document.getElementById('filei').addEventListener('change', function () {
+            var file = this.files[0];
+            if (file) {
+                loadedFile = file;
+                alert('Plik CSV został załadowany i zapisany.');
+                populateDropdown();
+            } else {
+                alert('Nie udało się załadować pliku CSV.');
+            }
+        });
 
+        document.getElementById('select').addEventListener('change', function () {
+            var selectedOption = this.value;
+            if (loadedFile) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var csvData = e.target.result;
+                    var rows = csvData.split('\n');
+                    var selectedDistrict = rows[selectedOption].split(';')[0];
 
- <!-- skrypt do odczytu plikow z excela znaleziony w necie -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+                    var districtRows = rows.filter(function (row) {
+                        return row.startsWith(selectedDistrict + ';');
+                    });
 
+                    displayResults(districtRows);
+                    calculateSquaredDistance();
+                };
 
-<script>
-document.getElementById('przyciskexcel').addEventListener('click', function() {
-document.getElementById('filei').click();
-});
+                reader.readAsText(loadedFile);
+            } else {
+                alert('Proszę najpierw załadować plik CSV.');
+            }
+        });
 
-document.getElementById('filei').addEventListener('change', function() {
-  var file = this.files[0];
-  if (file) {
-  loadedFile = file;
-  alert('Plik Excel został załadowany i zapisany.');
-      }
-    });
-    
-//tutaj znajduje sie kod do wczytania danych z excela 
-    document.getElementById('select').addEventListener('change', function() {
-      var selectedOption = parseInt(this.value);
-      if (loadedFile) {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-          var data = new Uint8Array(e.target.result);
-          var workbook = XLSX.read(data, { type: 'array' });
-          var worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          var selectedCell = worksheet[XLSX.utils.encode_cell({ r: selectedOption, c: 5 })];
-          var cellValue = selectedCell ? selectedCell.v : 'Brak danych';
-          document.getElementById('wybranyokreg').textContent = "Wybrany okreg wyborczy zawiera " + cellValue + " wyborcow";
-        };
+        function calculateSquaredDistance() {
+            var selectedOption = document.getElementById('select').value;
+            if (loadedFile && selectedOption !== "") {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var csvData = e.target.result;
+                    var rows = csvData.split('\n');
+                    var selectedDistrict = rows[selectedOption].split(';')[0];
 
-        reader.readAsArrayBuffer(loadedFile);
-      } else {
-        alert('Proszę najpierw załadować plik Excel.');
-      }
-    });
-  </script>
+                    var districtRows = rows.filter(function (row) {
+                        return row.startsWith(selectedDistrict + ';');
+                    });
 
+                    var squaredDistance = 0;
+                    for (var i = 0; i < districtRows.length; i++) {
+                        var rowData = districtRows[i].split(';');
+                        var votersCount = parseFloat(rowData[4].replace(',', '.')) || 0;
+                        squaredDistance += Math.pow(votersCount, 2);
+                    }
 
+                    document.getElementById('kwadratodleglosci').innerHTML = 'Kwadrat odległości dla Okręgu Wyborczego ' + selectedDistrict + ': ' + squaredDistance;
 
+                    findClosestDistricts(selectedDistrict, squaredDistance);
+                };
+
+                reader.readAsText(loadedFile);
+            } else {
+                alert('Proszę najpierw załadować plik CSV i wybrać okręg.');
+            }
+        }
+
+        function findClosestDistricts(selectedDistrict, currentSquaredDistance) {
+            var selectedOption = document.getElementById('select').value;
+            if (loadedFile && selectedOption !== "") {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var csvData = e.target.result;
+                    var rows = csvData.split('\n');
+
+                    var distances = [];
+
+                    for (var i = 0; i < addedDistricts.length; i++) {
+                        var districtNumber = addedDistricts[i];
+                        if (districtNumber !== selectedDistrict) {
+                            var districtRows = rows.filter(function (row) {
+                                return row.startsWith(districtNumber + ';');
+                            });
+
+                            var squaredDistance = 0;
+                            for (var j = 0; j < districtRows.length; j++) {
+                                var rowData = districtRows[j].split(';');
+                                var votersCount = parseFloat(rowData[4].replace(',', '.')) || 0;
+                                squaredDistance += Math.pow(votersCount, 2);
+                            }
+
+                            distances.push({ districtNumber: districtNumber, distance: squaredDistance });
+                        }
+                    }
+
+                    distances.sort(function (a, b) {
+                        return a.distance - b.distance;
+                    });
+
+                    displayClosestDistricts(distances, currentSquaredDistance);
+                };
+
+                reader.readAsText(loadedFile);
+            } else {
+                alert('Proszę najpierw załadować plik CSV i wybrać okręg.');
+            }
+        }
+
+        function displayClosestDistricts(distances, currentSquaredDistance) {
+            var closestLowerDistrict = null;
+            var closestHigherDistrict = null;
+
+            for (var i = 0; i < distances.length; i++) {
+                if (distances[i].distance < currentSquaredDistance) {
+                    closestLowerDistrict = distances[i];
+                } else if (distances[i].distance > currentSquaredDistance) {
+                    closestHigherDistrict = distances[i];
+                    break; 
+                }
+            }
+
+            var closestDistrictsText = "Najbliższe okręgi:</br>";
+
+            if (closestLowerDistrict) {
+                closestDistrictsText += "Okręg " + closestLowerDistrict.districtNumber + "</br>";
+            }
+
+            if (closestHigherDistrict) {
+                closestDistrictsText += "Okręg " + closestHigherDistrict.districtNumber + " </br>";
+            }
+
+            document.getElementById('najblizszeokregi').innerHTML = closestDistrictsText;
+        }
+
+        function populateDropdown() {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var csvData = e.target.result;
+                var rows = csvData.split('\n');
+                var selectDropdown = document.getElementById('select');
+                selectDropdown.innerHTML = "";
+                addedDistricts = [];
+                for (var i = 0; i < rows.length; i++) {
+                    var districtNumber = rows[i].split(';')[0];
+                    if (!addedDistricts.includes(districtNumber)) {
+                        var optionValue = i;
+                        var optionText = "Okreg wyborczy " + districtNumber;
+                        var option = document.createElement("option");
+                        option.value = optionValue;
+                        option.text = optionText;
+                        selectDropdown.add(option);
+                        addedDistricts.push(districtNumber);
+                    }
+                }
+            };
+            reader.readAsText(loadedFile);
+        }
+
+        function displayResults(rows) {
+            var resultText = "Wyniki dla Okręgu Wyborczego " + rows[0].split(';')[0] + ":</br>";
+            for (var i = 0; i < rows.length; i++) {
+                var rowData = rows[i].split(';');
+                var districtName = rowData[2];
+                var votersCount = rowData[4].replace(',', '.') || 'Brak danych';
+                resultText += districtName + ": " + votersCount + " wyborców</br>";
+            }
+
+            document.getElementById('wybranyokreg').innerHTML = resultText;
+        }
+    </script>
 </body>
+
 </html>
