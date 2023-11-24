@@ -12,7 +12,6 @@
     <select id="select"></select>
     <div id="wybranyokreg"></div>
     <div id="kwadratodleglosci"></div>
-    <div id="najblizszeokregi"></div>
 
     <script>
         var loadedFile;
@@ -28,8 +27,6 @@
                 loadedFile = file;
                 alert('Plik CSV został załadowany i zapisany.');
                 populateDropdown();
-            } else {
-                alert('Nie udało się załadować pliku CSV.');
             }
         });
 
@@ -43,11 +40,11 @@
                     var selectedDistrict = rows[selectedOption].split(';')[0];
 
                     var districtRows = rows.filter(function (row) {
-                        return row.startsWith(selectedDistrict + ';');
+                    return row.startsWith(selectedDistrict + ';');
                     });
 
                     displayResults(districtRows);
-                    calculateSquaredDistance();
+                    kwadratodleglosci();
                 };
 
                 reader.readAsText(loadedFile);
@@ -56,7 +53,7 @@
             }
         });
 
-        function calculateSquaredDistance() {
+        function kwadratodleglosci() {
             var selectedOption = document.getElementById('select').value;
             if (loadedFile && selectedOption !== "") {
                 var reader = new FileReader();
@@ -66,92 +63,23 @@
                     var selectedDistrict = rows[selectedOption].split(';')[0];
 
                     var districtRows = rows.filter(function (row) {
-                        return row.startsWith(selectedDistrict + ';');
+                    return row.startsWith(selectedDistrict + ';');
                     });
 
                     var squaredDistance = 0;
                     for (var i = 0; i < districtRows.length; i++) {
-                        var rowData = districtRows[i].split(';');
-                        var votersCount = parseFloat(rowData[4].replace(',', '.')) || 0;
-                        squaredDistance += Math.pow(votersCount, 2);
+                    var rowData = districtRows[i].split(';');
+                    var votersCount = parseFloat(rowData[4].replace(',', '.')) || 0;
+                    squaredDistance += Math.pow(votersCount, 2);
                     }
 
                     document.getElementById('kwadratodleglosci').innerHTML = 'Kwadrat odległości dla Okręgu Wyborczego ' + selectedDistrict + ': ' + squaredDistance;
-
-                    findClosestDistricts(selectedDistrict, squaredDistance);
                 };
 
                 reader.readAsText(loadedFile);
             } else {
                 alert('Proszę najpierw załadować plik CSV i wybrać okręg.');
             }
-        }
-
-        function findClosestDistricts(selectedDistrict, currentSquaredDistance) {
-            var selectedOption = document.getElementById('select').value;
-            if (loadedFile && selectedOption !== "") {
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    var csvData = e.target.result;
-                    var rows = csvData.split('\n');
-
-                    var distances = [];
-
-                    for (var i = 0; i < addedDistricts.length; i++) {
-                        var districtNumber = addedDistricts[i];
-                        if (districtNumber !== selectedDistrict) {
-                            var districtRows = rows.filter(function (row) {
-                                return row.startsWith(districtNumber + ';');
-                            });
-
-                            var squaredDistance = 0;
-                            for (var j = 0; j < districtRows.length; j++) {
-                                var rowData = districtRows[j].split(';');
-                                var votersCount = parseFloat(rowData[4].replace(',', '.')) || 0;
-                                squaredDistance += Math.pow(votersCount, 2);
-                            }
-
-                            distances.push({ districtNumber: districtNumber, distance: squaredDistance });
-                        }
-                    }
-
-                    distances.sort(function (a, b) {
-                        return a.distance - b.distance;
-                    });
-
-                    displayClosestDistricts(distances, currentSquaredDistance);
-                };
-
-                reader.readAsText(loadedFile);
-            } else {
-                alert('Proszę najpierw załadować plik CSV i wybrać okręg.');
-            }
-        }
-
-        function displayClosestDistricts(distances, currentSquaredDistance) {
-            var closestLowerDistrict = null;
-            var closestHigherDistrict = null;
-
-            for (var i = 0; i < distances.length; i++) {
-                if (distances[i].distance < currentSquaredDistance) {
-                    closestLowerDistrict = distances[i];
-                } else if (distances[i].distance > currentSquaredDistance) {
-                    closestHigherDistrict = distances[i];
-                    break; 
-                }
-            }
-
-            var closestDistrictsText = "Najbliższe okręgi:</br>";
-
-            if (closestLowerDistrict) {
-                closestDistrictsText += "Okręg " + closestLowerDistrict.districtNumber + "</br>";
-            }
-
-            if (closestHigherDistrict) {
-                closestDistrictsText += "Okręg " + closestHigherDistrict.districtNumber + " </br>";
-            }
-
-            document.getElementById('najblizszeokregi').innerHTML = closestDistrictsText;
         }
 
         function populateDropdown() {
@@ -165,30 +93,28 @@
                 for (var i = 0; i < rows.length; i++) {
                     var districtNumber = rows[i].split(';')[0];
                     if (!addedDistricts.includes(districtNumber)) {
-                        var optionValue = i;
-                        var optionText = "Okreg wyborczy " + districtNumber;
-                        var option = document.createElement("option");
-                        option.value = optionValue;
-                        option.text = optionText;
-                        selectDropdown.add(option);
-                        addedDistricts.push(districtNumber);
+                    var optionValue = i;
+                    var optionText = "Okreg wyborczy " + districtNumber;
+                    var option = document.createElement("option");
+                    option.value = optionValue;
+                    option.text = optionText;
+                    selectDropdown.add(option);
+                    addedDistricts.push(districtNumber);
                     }
                 }
-                
             };
             reader.readAsText(loadedFile);
         }
-
         function displayResults(rows) {
-            var resultText = "Wyniki dla Okręgu Wyborczego " + rows[0].split(';')[0] + ":</br>";
-            for (var i = 0; i < rows.length; i++) {
-                var rowData = rows[i].split(';');
-                var districtName = rowData[2];
-                var votersCount = rowData[4].replace(',', '.') || 'Brak danych';
-                resultText += districtName + ": " + votersCount + " wyborców</br>";
+        var resultText = "Wyniki dla Okręgu Wyborczego " + rows[0].split(';')[0] + ":</br>";
+for (var i = 0; i < rows.length; i++) {
+            var rowData = rows[i].split(';');
+            var districtName = rowData[2];
+            var votersCount = rowData[4].replace(',', '.') || 'Brak danych';
+            resultText += districtName + ": " + votersCount + " wyborców</br>";
             }
 
-            document.getElementById('wybranyokreg').innerHTML = resultText;
+        document.getElementById('wybranyokreg').innerHTML = resultText;
         }
     </script>
 </body>
